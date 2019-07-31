@@ -65,6 +65,9 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
           },
           "_text_tata": agg1 === 'QueryHash' ? {
             "top_hits": {
+              "sort": metric !== 'Count' ? {
+                [metric]: "desc",
+              } : undefined,
               "size": 1,
               "_source": {
                 "includes": [ "TextData" ]
