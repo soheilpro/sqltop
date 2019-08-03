@@ -10,7 +10,7 @@ function truncate(text, maxLength) {
 }
 
 function makeProgressBar(value, length) {
-  const fill = Math.floor((value || 1) * length);
+  const fill = Math.floor(value * length);
   const empty = length - fill;
 
   return Array(empty + 1).join(' ') + Array(fill + 1).join('#');
