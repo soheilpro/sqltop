@@ -16,6 +16,7 @@ const fields = {
   'reads': 'Reads',
   'writes': 'Writes',
   'query': 'QueryHash',
+  'textdata': 'TextDataHash',
   'db': 'DatabaseName',
   'login': 'LoginName',
   'server': 'ServerName',
@@ -27,8 +28,8 @@ const yargs = require('yargs')
   .option('port', { type: 'number', default: 9200, describe: 'Elasticsearch port.'})
   .option('index-prefix', { type: 'string', default: 'sql-', describe: 'Elasticsearch index prefix.'})
   .option('metric', { type: 'string', demandOption: true, choices: ['Count', 'Duration', 'CPU', 'Reads', 'Writes'], coerce: value => fields[value], describe: 'Metric to calculate.'})
-  .option('agg1', { type: 'string', default: 'query', choices: ['QueryHash', 'DatabaseName', 'LoginName', 'ServerName', 'HostName'], coerce: value => fields[value], describe: 'Aggregate 1.'})
-  .option('agg2', { type: 'string', choices: ['QueryHash', 'DatabaseName', 'LoginName', 'ServerName', 'HostName'], coerce: value => fields[value], describe: 'Aggregate 2.'})
+  .option('agg1', { type: 'string', default: 'query', choices: ['QueryHash', 'TextDataHash', 'DatabaseName', 'LoginName', 'ServerName', 'HostName'], coerce: value => fields[value], describe: 'Aggregate 1.'})
+  .option('agg2', { type: 'string', choices: ['QueryHash', 'TextDataHash', 'DatabaseName', 'LoginName', 'ServerName', 'HostName'], coerce: value => fields[value], describe: 'Aggregate 2.'})
   .option('db', { type: 'string', describe: 'DatabaseName filter.'})
   .option('login', { type: 'string', describe: 'LoginName filter.'})
   .option('server', { type: 'string', describe: 'ServerName filter.'})
@@ -60,10 +61,21 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
                 "sum": {
                   "field": metric
                 }
-              }
+              },
+              "_text_tata": agg2 === 'QueryHash' || agg2 === 'TextDataHash' ? {
+                "top_hits": {
+                  "sort": metric !== 'Count' ? {
+                    [metric]: "desc",
+                  } : undefined,
+                  "size": 1,
+                  "_source": {
+                    "includes": [ "TextData" ]
+                  }
+                },
+              } : undefined,
             } : undefined,
           },
-          "_text_tata": agg1 === 'QueryHash' ? {
+          "_text_tata": (agg1 === 'QueryHash' || agg1 === 'TextDataHash') && !(agg2 === 'QueryHash' || agg2 === 'TextDataHash') ? {
             "top_hits": {
               "sort": metric !== 'Count' ? {
                 [metric]: "desc",
@@ -137,13 +149,14 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
   const result = {
     agg1: response.aggregations.agg1.buckets.map(bucket => ({
       key: bucket.key,
-      text: agg1 === 'QueryHash' ? bucket._text_tata.hits.hits[0]._source.TextData : '',
+      text: bucket._text_tata ? bucket._text_tata.hits.hits[0]._source.TextData : '',
       count: bucket.doc_count,
       value: metric !== 'Count' ? bucket._value.value : bucket.doc_count,
       valueAverage: metric !== 'Count' ? bucket._value.value / bucket.doc_count : 1,
       valuePercent: (metric !== 'Count' ? bucket._value.value : bucket.doc_count) / totalValue,
       agg1: bucket.agg2.buckets.map(subBucket => ({
         key: subBucket.key,
+        text: subBucket._text_tata ? subBucket._text_tata.hits.hits[0]._source.TextData : '',
         count: subBucket.doc_count,
         value: metric !== 'Count' ? subBucket._value.value : subBucket.doc_count,
         valueAverage: metric !== 'Count' ? subBucket._value.value / subBucket.doc_count : 1,
@@ -228,11 +241,20 @@ async function main() {
         subBucket.key,
         argv['metric'] !== 'Count' ? `${subBucket.countFormatted} x ${subBucket.valueAverageFormatted}`.dim : '',
       );
+
+      if (subBucket.text) {
+        console.log();
+        console.log(truncate(subBucket.text, 10000).dim);
+        console.log();
+      }
     }
 
-    console.log();
-    console.log(truncate(bucket.text, 10000).dim);
-    console.log();
+    if (bucket.text) {
+      console.log();
+      console.log(truncate(bucket.text, 10000).dim);
+      console.log();
+    }
+
     console.log();
   }
 }
