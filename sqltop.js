@@ -43,14 +43,14 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
   const request = {
     "size": 0,
     "aggs": {
-      "agg1": {
+      "_agg1": {
         "terms": {
           "field": `${agg1}.keyword`,
           "order": metric !== 'Count' ? { "_value": "desc"} : { "_count": "desc"},
           "size": maxResult
         },
         "aggs": {
-          "agg2": {
+          "_agg2": {
             "terms": {
               "field": `${agg2}.keyword`,
               "order": metric !== 'Count' ? { "_value": "desc"} : { "_count": "desc"},
@@ -62,7 +62,7 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
                   "field": metric
                 }
               },
-              "_text_tata": agg2 === 'QueryHash' || agg2 === 'TextDataHash' ? {
+              "_text_data": agg2 === 'QueryHash' || agg2 === 'TextDataHash' ? {
                 "top_hits": {
                   "sort": metric !== 'Count' ? {
                     [metric]: "desc",
@@ -75,7 +75,7 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
               } : undefined,
             } : undefined,
           },
-          "_text_tata": (agg1 === 'QueryHash' || agg1 === 'TextDataHash') && !(agg2 === 'QueryHash' || agg2 === 'TextDataHash') ? {
+          "_text_data": (agg1 === 'QueryHash' || agg1 === 'TextDataHash') && !(agg2 === 'QueryHash' || agg2 === 'TextDataHash') ? {
             "top_hits": {
               "sort": metric !== 'Count' ? {
                 [metric]: "desc",
@@ -141,22 +141,22 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
 
   const response = await elasticsearch.search(request);
 
-  if (response.aggregations.agg1.buckets.length === 0)
+  if (response.aggregations._agg1.buckets.length === 0)
     return { agg1: [] };
 
-  const totalValue = metric !== 'Count' ? response.aggregations.agg1.buckets[0]._value.value : response.aggregations.agg1.buckets[0].doc_count;
+  const totalValue = metric !== 'Count' ? response.aggregations._agg1.buckets[0]._value.value : response.aggregations._agg1.buckets[0].doc_count;
 
   const result = {
-    agg1: response.aggregations.agg1.buckets.map(bucket => ({
+    agg1: response.aggregations._agg1.buckets.map(bucket => ({
       key: bucket.key,
-      text: bucket._text_tata ? bucket._text_tata.hits.hits[0]._source.TextData : '',
+      text: bucket._text_data ? bucket._text_data.hits.hits[0]._source.TextData : '',
       count: bucket.doc_count,
       value: metric !== 'Count' ? bucket._value.value : bucket.doc_count,
       valueAverage: metric !== 'Count' ? bucket._value.value / bucket.doc_count : 1,
       valuePercent: (metric !== 'Count' ? bucket._value.value : bucket.doc_count) / totalValue,
-      agg1: bucket.agg2.buckets.map(subBucket => ({
+      agg2: bucket._agg2.buckets.map(subBucket => ({
         key: subBucket.key,
-        text: subBucket._text_tata ? subBucket._text_tata.hits.hits[0]._source.TextData : '',
+        text: subBucket._text_data ? subBucket._text_data.hits.hits[0]._source.TextData : '',
         count: subBucket.doc_count,
         value: metric !== 'Count' ? subBucket._value.value : subBucket.doc_count,
         valueAverage: metric !== 'Count' ? subBucket._value.value / subBucket.doc_count : 1,
@@ -211,7 +211,7 @@ async function main() {
     if (bucket.valueFormatted.length > maxValueFormattedLength)
       maxValueFormattedLength = bucket.valueFormatted.length;
 
-    for (const subBucket of bucket.agg1) {
+    for (const subBucket of bucket.agg2) {
       subBucket.countFormatted = numeral(subBucket.count).format('0,0');
       subBucket.valueFormatted = numeral(subBucket.value / valueUnit).format(format);
       subBucket.valueAverageFormatted = numeral(subBucket.valueAverage / valueUnit).format(format);
@@ -233,7 +233,7 @@ async function main() {
       argv['metric'] !== 'Count' ? `${bucket.countFormatted} x ${bucket.valueAverageFormatted}`.yellow.dim : '',
     );
 
-    for (const subBucket of bucket.agg1) {
+    for (const subBucket of bucket.agg2) {
       console.log('',
         new Array(progressBarLength + 1).join(' '),
         padLeft(subBucket.valuePercentFormatted, maxValuePercentFormattedLength).green.dim,
