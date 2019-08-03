@@ -14,7 +14,7 @@ npm install -g sqltop
 ```
 $ sqltop --address elasticsearch.example.com \
          --metric reads \
-         --agg1 query \
+         --agg query \
          --agg2 server \
          --start '2019-07-31 09:00' \
          --end '2019-07-31 12:30'

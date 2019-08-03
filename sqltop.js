@@ -26,7 +26,7 @@ const yargs = require('yargs')
   .option('port', { type: 'number', default: 9200, describe: 'Elasticsearch port.'})
   .option('index-prefix', { type: 'string', default: 'sql-', describe: 'Elasticsearch index prefix.'})
   .option('metric', { type: 'string', demandOption: true, choices: ['Count', 'Duration', 'CPU', 'Reads', 'Writes'], coerce: value => fields[value], describe: 'Metric to calculate.'})
-  .option('agg1', { type: 'string', default: 'query', choices: ['QueryHash', 'TextDataHash', 'DatabaseName', 'LoginName', 'ServerName', 'HostName'], coerce: value => fields[value], describe: 'Aggregate 1.'})
+  .option('agg', { type: 'string', default: 'query', choices: ['QueryHash', 'TextDataHash', 'DatabaseName', 'LoginName', 'ServerName', 'HostName'], coerce: value => fields[value], describe: 'Aggregate 1.'})
   .option('agg2', { type: 'string', choices: ['QueryHash', 'TextDataHash', 'DatabaseName', 'LoginName', 'ServerName', 'HostName'], coerce: value => fields[value], describe: 'Aggregate 2.'})
   .option('db', { type: 'string', describe: 'DatabaseName filter.'})
   .option('login', { type: 'string', describe: 'LoginName filter.'})
@@ -178,7 +178,7 @@ async function main() {
   const result = await top({
     elasticsearch: elasticsearch,
     metric: argv['metric'],
-    agg1: argv['agg1'],
+    agg1: argv['agg'],
     agg2: argv['agg2'],
     databaseName: argv['db'],
     loginName: argv['login'],
