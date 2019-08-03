@@ -54,12 +54,12 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
               "order": metric !== 'Count' ? { "_value": "desc"} : { "_count": "desc"},
               "size": 10
             },
-            "aggs": metric !== 'Count' ? {
-              "_value": {
+            "aggs": {
+              "_value": metric !== 'Count' ? {
                 "sum": {
                   "field": metric
                 }
-              },
+              } : undefined,
               "_text_data": agg2 === 'QueryHash' || agg2 === 'TextDataHash' ? {
                 "top_hits": {
                   "sort": metric !== 'Count' ? {
@@ -71,7 +71,7 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
                   }
                 },
               } : undefined,
-            } : undefined,
+            },
           },
           "_text_data": (agg1 === 'QueryHash' || agg1 === 'TextDataHash') && !(agg2 === 'QueryHash' || agg2 === 'TextDataHash') ? {
             "top_hits": {
