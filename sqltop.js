@@ -14,7 +14,7 @@ const fields = {
   'reads': 'Reads',
   'writes': 'Writes',
   'query': 'QueryHash',
-  'textdata': 'TextDataHash',
+  'text': 'TextDataHash',
   'db': 'DatabaseName',
   'login': 'LoginName',
   'server': 'ServerName',
