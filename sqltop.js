@@ -37,7 +37,7 @@ const yargs = require('yargs')
   .option('max-results', { type: 'number', alias: 'n', default: 10, describe: 'Maximum number of results to return.'})
   .strict(true);
 
-async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName, serverName, hostName, startTime, endTime, maxResult }) {
+async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName, serverName, hostName, startTime, endTime, maxResults }) {
   const request = {
     "size": 0,
     "aggs": {
@@ -45,7 +45,7 @@ async function top({ elasticsearch, metric, agg1, agg2, databaseName, loginName,
         "terms": {
           "field": `${agg1}.keyword`,
           "order": metric !== 'Count' ? { "_value": "desc"} : { "_count": "desc"},
-          "size": maxResult
+          "size": maxResults
         },
         "aggs": {
           "_agg2": {
@@ -186,7 +186,7 @@ async function main() {
     hostName: argv['host'],
     startTime: argv['start'],
     endTime: argv['end'],
-    maxResult: argv['max-results'],
+    maxResults: argv['max-results'],
   });
 
   const progressBarLength = 20;
