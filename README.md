@@ -24,6 +24,8 @@ $ sqltop --address elasticsearch.example.com \
 ![Sample output](output.png)
 
 ## Version History
++ **1.1**
+	+ Added support for TextDataHash field.
 + **1.0**
 	+ Initial release.
 
