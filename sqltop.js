@@ -5,9 +5,7 @@ const moment = require('moment');
 const numeral = require('numeral');
 const colors = require('colors');
 const Elasticsearch = require('./elasticsearch');
-const padLeft = require('./string').padLeft;
-const truncate = require('./string').truncate;
-const makeProgressBar = require('./string').makeProgressBar;
+const { padLeft, truncate, makeProgressBar } = require('./string');
 
 const fields = {
   'count': 'Count',
